@@ -1,0 +1,22 @@
+# STM32CubeIDE / Eclipse build outputs
+Debug/
+Release/
+bin/
+obj/
+
+# Core dump and execution artifacts
+*.elf
+*.hex
+*.bin
+*.map
+*.o
+*.su
+*.d
+
+# Local/User specific IDE configurations (keeps your personal window layout out of Git)
+.settings/
+*.launch
+
+# Operating system files
+.DS_Store
+Thumbs.db
