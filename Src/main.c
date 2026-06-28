@@ -1,122 +1,104 @@
+#include "mem_def.h"
 
-#include <stdio.h>
-#include<stdlib.h>
-#include<string.h>
+#include <stdint.h>
+#include <stdbool.h>
 
-int numbers[] = { 456,345,678,567,890,456,3456,123,765,456,896,456,678,987,000,145,90};
-
-int  someData = 90;
-
-void array_fill_numbers(int pNumbers[], unsigned int len)
-{
-
-    for ( unsigned int i = 0 ; i < len ; i++)
-    {
-        pNumbers[i] = rand() % 1000;
-    }
-
-}
-
-void display_numbers(int *pNumbers, unsigned int len, char *pMessage)
-{
-    printf("%s",pMessage);
-
-    for (unsigned i = 0 ; i < len ; i++)
-    {
-        printf("%5d  ",pNumbers[i]);
-    }
-
-    printf("\n");
-}
-
-
-void swap_numbers(int *x,int *y)
-{
-     int temp=*x;
-     *x=*y;
-     *y=temp;
-
-#if 0
-     void (*jump_addr) (void);
-     jump_addr = (void*)0x20000009;
-     jump_addr();
+#if !defined(__SOFT_FP__) && defined(__ARM_FP)
 #endif
 
-     someData = 10;
-}
+//volatile uint32_t* GPIOA_BASE = (volatile uint32_t*) 0x48000000; // Same as MODER
+//volatile uint32_t* RCC_GPIOA_LOC = (volatile uint32_t*) 0x4002104C;
+
+// For RCC - Light and Button
+volatile uint32_t *RCC_AHB2ENR = (volatile uint32_t *)0x4002104C;
+
+// Light mode and electricity
+volatile uint32_t *GPIOA_MODER = (volatile uint32_t *)0x48000000;
+volatile uint32_t *GPIOA_ODR   = (volatile uint32_t *)0x48000014;
+
+// Button Base + Mode
+volatile uint32_t *GPIOC_BASE_AND_MODER   = (volatile uint32_t *)0x48000800;
+
+// Electricity coming from button
+volatile uint32_t *GPIOC_IDR   = (volatile uint32_t *)0x48000810; // PC
 
 
-void bubble_sort(int *pNumbers , unsigned int len)
+
+
+// Mode and power are in the same section in the address space
+// Clock is like a heart-beat supply station for the whole city
+// Turn it on for the specific bus and port on the bus you need
+
+int main(void)
 {
+    /* Loop forever */
+	for(;;) {
+		// For all comms to and from the board from PC, processor has SWO pin from the core to the ST Link V2 Debug Circuitery, which allows connection to pc, printf flows over this SWO pin
+		// SWO pin is connect to ST Link Cicuitery on the board, and that connects to ITM unit in core, which is a buffer for incoming data
 
-    int i,j,flag=0;
 
-    for(i=0;i<len-1;i++)
-    {
-        flag=0;
 
-        for(j=0;j<len-1-i;j++)
-        {
-            if(pNumbers[j] > pNumbers[j+1])
-            {
-                swap_numbers(&pNumbers[j],&pNumbers[j+1]);
-                flag=1;
-            }
-        }
+		// First, we know that we want to turn on the LD2 light
+		// We find which pin it is connected to: PA5
+		// Now look in the memory map(memory organization) and see what address in the CPUs address space controls Port A
+		// We look through GPIOA and find that the base address is 0x48000000
+		// There is no electricity flowing to port A, so opening the gate there won't do anything, because the clock is not on, go to Reset and Clock Control (RCC)
+		// Again in the memory map(Where peripherals are placed in memory), look for RCC, its base is 0x40021000
+		// Go to the RCC section and look at the list of registers, find the one that controls Port A / GPIOA, it is RCC_AHB2ENR (AHB2 Peripheral Clock Enable Register), with an offset of base + 0x4C
+		// That specific peripheral register Base(0x40021000) + Offset(0x4C) is a word size register to control power to Port A
+		// In the documentation for this, it says, of the 32 bits at PA5 RCC Register (0x4002104C) setting bit 0 to 1 enables the clock for Port A, so go to the offset, set bit zero, and power starts flowing(the clock)
+		// Now we have to tell Port A 5 specifically, what it is doing, input, output, etc.  Lets go to Chapter 8 GPIO Section, and find GPIO port mode register (GPIOx_MODER), there we see offset for port A is 0x00
+		// This address lets you configure the mode of each specific register in Port A, so we set PA5 to General Purpose Output Mode, by setting bits 11 and 10 to 01
+		// Finally scroll down a bit to find GPIO port output data register (GPIOx_ODR), which tells us how to send power to PA5, GPIOA Base (0x48000000) + 0x14 = 0x48000014, and then we just set bit 5 to 1 to send power there.
 
-        if(flag==0)
-            break;
-    }
+		// 1. Turn on the clock grid for Port A (Set Bit 0 to 1)
+		*RCC_AHB2ENR |= (1 << 0);
+
+		// 2. Clear bits 11 and 10 of MODER to 00, then set them to 01
+		*GPIOA_MODER &= ~(3 << 10); // Clear
+		*GPIOA_MODER |= (1 << 10);  // Set bit 10 to '1' -> makes it 01
+
+		// 3. Set Bit 5 of ODR to 1 to blast 3.3V to the LED
+		*GPIOA_ODR &= ((0xFF) & ~(1 << 5));
+
+		// Now make light come on with blue push-button
+
+		// B1 connected to I/O PC13 (pin 2), so this is GPIOC Pin 13
+
+		// Just get the base, so that you can apply later offsets:
+		// Look at the memory organization sheet, GPIO C starts at 0x4800 0800
+
+		// Get the mode setter, so you can tell the button what it is doing
+		// 															  (input)
+
+		// The mode setter has an offset of 0x00, so we just need to change
+		// the value at 0x4800 0800, in that 32 bit address, of bit 26 and 27
+		// to 00
+
+		// Now turn on RCC clock for the button at offset 0x4C, at that offset
+		// Change bit two to be one
+
+
+
+
+
+
+		// AHB2 -> GPIOC -> Base: 4800 0800 -> Set Input Mode(Bits 26 27 00)
+		// AHB1 -> RCC -> Base: 4002 1000 -> Offset (4C) -> Set Bit 2 to 1
+
+		*RCC_AHB2ENR |= 4U; // Always set the clock first, otherwise you can not read or write to any of the registers of that peripheral
+		*GPIOC_BASE_AND_MODER &= ~(3U << 26);
+
+
+
+		while(1) {
+			// Loop forever keeping the light on
+			if (*GPIOC_IDR & (1U << 13)) { // button pushed in
+				*GPIOA_ODR &= ~(1U << 5);
+			} else {
+				*GPIOA_ODR |= (1U << 5);
+			}
+		}
+
+	}
 }
-
-void insertion_sort(int *pNumbers , unsigned int len)
-{
-
-     int i,j,num;
-
-     for(i=1 ; i<len ; i++)
-     {
-         j=i-1;
-
-         num = pNumbers[i];
-
-         while( (j>-1) && (pNumbers[j] > num) )
-         {
-             pNumbers[j+1] = pNumbers[j];
-             j--;
-         }
-
-         pNumbers[j+1]=num;
-     }
-
-
-}
-
-
-
-int main()
-{
-
-    unsigned int len = sizeof(numbers)/sizeof(int);
-
-    array_fill_numbers(numbers,len);
-
-    display_numbers(numbers,len,"B-unsorted array :");
-
-    bubble_sort(numbers,len);
-
-    display_numbers(numbers,len,"B-sorted array   :");
-
-    array_fill_numbers(numbers,len);
-
-    display_numbers(numbers,len,"I-unsorted array :");
-
-    insertion_sort(numbers,len);
-
-    display_numbers(numbers,len,"I-sorted array   :");
-
-
-
-    return 0;
-}
-
