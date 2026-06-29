@@ -1,4 +1,4 @@
-#include "mem_def.h"
+#include "../drivers/Inc/mem_defs.h"
 
 #include <stdint.h>
 #include <stdbool.h>
@@ -6,31 +6,13 @@
 #if !defined(__SOFT_FP__) && defined(__ARM_FP)
 #endif
 
-//volatile uint32_t* GPIOA_BASE = (volatile uint32_t*) 0x48000000; // Same as MODER
-//volatile uint32_t* RCC_GPIOA_LOC = (volatile uint32_t*) 0x4002104C;
-
-// For RCC - Light and Button
-volatile uint32_t *RCC_AHB2ENR = (volatile uint32_t *)0x4002104C;
-
-// Light mode and electricity
-volatile uint32_t *GPIOA_MODER = (volatile uint32_t *)0x48000000;
-volatile uint32_t *GPIOA_ODR   = (volatile uint32_t *)0x48000014;
-
-// Button Base + Mode
-volatile uint32_t *GPIOC_BASE_AND_MODER   = (volatile uint32_t *)0x48000800;
-
-// Electricity coming from button
-volatile uint32_t *GPIOC_IDR   = (volatile uint32_t *)0x48000810; // PC
-
-
-
-
-// Mode and power are in the same section in the address space
-// Clock is like a heart-beat supply station for the whole city
-// Turn it on for the specific bus and port on the bus you need
 
 int main(void)
 {
+	// Turn on clock for TIM2 and for GPIOA
+
+	clock_init(void);
+
     /* Loop forever */
 	for(;;) {
 		// For all comms to and from the board from PC, processor has SWO pin from the core to the ST Link V2 Debug Circuitery, which allows connection to pc, printf flows over this SWO pin
@@ -101,4 +83,11 @@ int main(void)
 		}
 
 	}
+}
+
+// Init Functions
+
+void clock_init(void) {
+	RCC->AHB2ENR |= 1;
+	RCC->APB1ENR1 |= 1;
 }

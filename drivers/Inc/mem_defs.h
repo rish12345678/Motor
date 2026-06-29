@@ -49,6 +49,8 @@
 
 #define RCC_BASEADDR (AHB1_BASEADRR + 0x1000) // RCC BASE
 
+#define TIM2_BASEADDR (APB1_BASEADRR) // TIM2 BASE
+
 
 
 // STRUCT DEFINITIONS
@@ -151,6 +153,10 @@ typedef struct {
 #define RCC ((RCC_RegDef_t*) RCC_BASEADDR)
 
 #define TIM2 ((TIM_GEN_PURP_RegDef_t*) TIM2_BASEADDR)
+
+// Init Functions
+
+void clock_init(void);
 
 
 
