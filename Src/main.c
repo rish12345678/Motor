@@ -9,9 +9,10 @@
 
 int main(void)
 {
-	// Turn on clock for TIM2 and for GPIOA
+	// Turn on clock for GPIOA and SPI1
+	void clock_init(void);
 
-	clock_init(void);
+
 
     /* Loop forever */
 	for(;;) {
@@ -88,6 +89,7 @@ int main(void)
 // Init Functions
 
 void clock_init(void) {
-	RCC->AHB2ENR |= 1;
-	RCC->APB1ENR1 |= 1;
+	// Set both bits to one enabling clock
+	RCC->AHB2ENR |= RCC_AHB2ENR_GPIOAEN; // Gate clock to GPIO (A)
+	RCC->APB2ENR1 |= RCC_APB2ENR_SPI1EN; // Gate clock to SPI1
 }

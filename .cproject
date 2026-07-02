@@ -179,4 +179,5 @@
 			<resource resourceType="PROJECT" workspacePath="/Bare-Bones_Ud"/>
 		</configuration>
 	</storageModule>
+	<storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
 </cproject>
