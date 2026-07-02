@@ -103,9 +103,22 @@ void GPIO_mode_init(void) {
 	GPIOA->MODER &= ~(GPIO_MODER_MODE5 | GPIO_MODER_MODE6 | GPIO_MODER_MODE7);
 	GPIOA->MODER |= (GPIO_MODER_MODE5_1 | GPIO_MODER_MODE6_1 | GPIO_MODER_MODE7_1);
 
-	// Set these four pins to belong to the SPI1 Peripheral (Will hardcode chip select line)
+	// Set these four pins to belong to the SPI1 Peripheral (Will hardcode chip select pin PA4)
 	GPIOA->AFR[0] &= ~(0xF << GPIO_AFRL_AFSEL5_Pos | 0xF << GPIO_AFRL_AFSEL6_Pos | 0xF << GPIO_AFRL_AFSEL7_Pos); // Clear for pins 5 6 7
 
 	GPIOA->AFR[0] |= ( (GPIO_AFRL_AFSEL5_0 | GPIO_AFRL_AFSEL5_2) | (GPIO_AFRL_AFSEL6_0 | GPIO_AFRL_AFSEL6_2) | (GPIO_AFRL_AFSEL7_0 | GPIO_AFRL_AFSEL7_2));
+
+	// Set Pin speed for SCK, MISO, and MOSI pins to high for sharp squarish clock edges
+	GPIOA->OSPEEDR |= (GPIO_OSPEEDR_OSPEED5_1 | GPIO_OSPEEDR_OSPEED6_1 | GPIO_OSPEEDR_OSPEED7_1);
+
+
+	// Initialize the Chip Select Pin PA4, as a traditional output, will drive high, low when needed
+
+
+	GPIOA->MODER &= ~(GPIO_MODER_MODE4_Msk);
+	GPIOA->MODER |= GPIO_MODER_MODE4_0;
+
+	GPIOA->MODER |= GPIO_BSRR_BS4;
+
 
 }
