@@ -20,8 +20,11 @@ int main(void)
 	 * Configure SPI Peripheral
 	 */
 
-	// SPI_CR1 Register
+	// SPI_CR1 Register Configuration
 	void SPI_CR1_setup(void);
+
+	// SPI_CR2 Register Configuration
+	void SPI_CR2_setup(void);
 }
 
 // Init Functions
@@ -29,7 +32,7 @@ int main(void)
 void clock_init(void) {
 	// Set both bits to one enabling clock
 	RCC->AHB2ENR |= RCC_AHB2ENR_GPIOAEN; // Gate clock to GPIO (A)
-	RCC->APB2ENR1 |= RCC_APB2ENR_SPI1EN; // Gate clock to SPI1
+	RCC->APB2ENR |= RCC_APB2ENR_SPI1EN; // Gate clock to SPI1
 }
 
 void GPIO_init(void) {
@@ -72,4 +75,16 @@ void SPI_CR1_setup(void) {
 	// Software Slave Management and Master Mode
 	SPI1->CR1 |= (SPI_CR1_SSM | SPI_CR1_SSI);
 	SPI1->CR1 |= SPI_CR1_MSTR;
+}
+
+void SPI_CR2_setup(void) {
+	// Set Data Length to eight bits
+	SPI2->CR2 &= ~(SPI_CR2_DS_Msk);
+	SPI2->CR2 |= (0x7U << SPI_CR2_DS_Pos);
+
+	// RXNE flag triggered when FIFO level >= 8 bits
+	SPI2->CR2 |= SPI_CR2_FRXTH;
+
+	// Also just set enable bit here instead of another function
+	SPI1->CR1 |= SPI_CR1_SPE;
 }
