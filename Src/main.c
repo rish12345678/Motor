@@ -7,24 +7,50 @@
 #if !defined(__SOFT_FP__) && defined(__ARM_FP)
 #endif
 
+/*
+ * FUNCTION DECLARATIONS
+ */
+
+// Turn on clock for GPIOA and SPI1
+void clock_init(void);
+
+// Set mode for GPIOA (AF)
+void GPIO_init(void);
+
+/*
+ * Configure SPI Peripheral
+ */
+
+// SPI_CR1 Register Configuration
+void SPI_CR1_setup(void);
+
+// SPI_CR2 Register Configuration
+void SPI_CR2_setup(void);
+
+static inline uint8_t SPI_SEND_BYTE(void) __attribute__((always_inline));
+
 
 int main(void)
 {
-	// Turn on clock for GPIOA and SPI1
-	void clock_init(void);
+	clock_init();
+	GPIO_init();
+	SPI_CR1_setup();
+	SPI_CR2_setup();
 
-	// Set mode for GPIOA (AF)
-	void GPIO_init(void);
+	volatile uint8_t echo_reg = 0;
 
-	/*
-	 * Configure SPI Peripheral
-	 */
+	for (;;) {
+		// Set Chip Select Line Low
+		GPIOA->ODR &= ~(1U << 4);
 
-	// SPI_CR1 Register Configuration
-	void SPI_CR1_setup(void);
+		echo_reg = SPI_SEND_BYTE();
 
-	// SPI_CR2 Register Configuration
-	void SPI_CR2_setup(void);
+		GPIOA->ODR |= (1U << 4);
+
+		// Delay between sends
+
+		for(volatile int i = 0; i < 20000; i++);
+	}
 }
 
 // Init Functions
@@ -55,7 +81,7 @@ void GPIO_init(void) {
 	GPIOA->MODER &= ~(GPIO_MODER_MODE4_Msk);
 	GPIOA->MODER |= GPIO_MODER_MODE4_0;
 
-	GPIOA->MODER |= GPIO_BSRR_BS4;
+	GPIOA->ODR |= (1U << 4);
 }
 
 void SPI_CR1_setup(void) {
@@ -79,12 +105,30 @@ void SPI_CR1_setup(void) {
 
 void SPI_CR2_setup(void) {
 	// Set Data Length to eight bits
-	SPI2->CR2 &= ~(SPI_CR2_DS_Msk);
-	SPI2->CR2 |= (0x7U << SPI_CR2_DS_Pos);
+	SPI1->CR2 &= ~(SPI_CR2_DS_Msk);
+	SPI1->CR2 |= (0x7U << SPI_CR2_DS_Pos);
 
 	// RXNE flag triggered when FIFO level >= 8 bits
-	SPI2->CR2 |= SPI_CR2_FRXTH;
+	SPI1->CR2 |= SPI_CR2_FRXTH;
 
 	// Also just set enable bit here instead of another function
 	SPI1->CR1 |= SPI_CR1_SPE;
+}
+
+
+
+static inline uint8_t SPI_SEND_BYTE(void) {
+	// Pull chip select low, to indicate communication
+	GPIOA->ODR &= ~(1U << 4);
+
+	// while TX buffer not empty, keep polling
+	// once empty give it byte
+
+	// Check if bit 1 is ~1
+	while (!(SPI1->SR & SPI_SR_TXE));
+
+	*(__IO uint8_t *)&SPI1->DR = 0x24; // Sample Data to send 0x24 | 0b 0010 0100
+	while (!(SPI1->SR & SPI_SR_RXNE));
+
+	return *(__IO uint8_t *)&SPI1->DR;
 }
