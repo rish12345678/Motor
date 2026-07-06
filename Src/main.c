@@ -27,7 +27,7 @@ void SPI_CR1_setup(void);
 // SPI_CR2 Register Configuration
 void SPI_CR2_setup(void);
 
-static inline uint8_t SPI_SEND_BYTE(void) __attribute__((always_inline));
+uint8_t SPI_SEND_BYTE(void);
 
 
 int main(void)
@@ -40,10 +40,7 @@ int main(void)
 	volatile uint8_t echo_reg = 0;
 
 	for (;;) {
-		// Set Chip Select Line Low
-		GPIOA->ODR &= ~(1U << 4);
-
-		echo_reg = SPI_SEND_BYTE();
+		echo_reg = SPI_SEND_BYTE(); // Should hold 0x24
 
 		GPIOA->ODR |= (1U << 4);
 
@@ -51,6 +48,9 @@ int main(void)
 
 		for(volatile int i = 0; i < 20000; i++);
 	}
+
+
+	(void) echo_reg; // Keep js to avoid compiler wrng
 }
 
 // Init Functions
@@ -117,9 +117,9 @@ void SPI_CR2_setup(void) {
 
 
 
-static inline uint8_t SPI_SEND_BYTE(void) {
+uint8_t SPI_SEND_BYTE(void) {
 	// Pull chip select low, to indicate communication
-	GPIOA->ODR &= ~(1U << 4);
+	GPIOA->ODR &= (0 << 4);
 
 	// while TX buffer not empty, keep polling
 	// once empty give it byte
@@ -129,6 +129,8 @@ static inline uint8_t SPI_SEND_BYTE(void) {
 
 	*(__IO uint8_t *)&SPI1->DR = 0x24; // Sample Data to send 0x24 | 0b 0010 0100
 	while (!(SPI1->SR & SPI_SR_RXNE));
+
+	GPIOA->ODR |= (1U << 4);
 
 	return *(__IO uint8_t *)&SPI1->DR;
 }
