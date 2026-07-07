@@ -131,11 +131,13 @@ uint8_t SPI_SEND_BYTE(void) {
 	// while TX buffer not empty, keep polling
 	// once empty give it byte
 
-	// Check if bit 1 is ~1
+	// Check if bit 1 is 0
 	while (!(SPI1->SR & SPI_SR_TXE));
 
 	*(__IO uint8_t *)&SPI1->DR = 0x84; // Sample Data to send 0x84 | 0b 1000 0100
-	while (!(SPI1->SR & SPI_SR_RXNE));
+
+	while (!(SPI1->SR & SPI_SR_RXNE)); // Poll until RX buffer has a byte in it
+	while (SPI1->SR & SPI_SR_BSY); // Poll until shift register is not busy in transmission
 
 	GPIOA->ODR |= (1U << 4);
 
