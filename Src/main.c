@@ -43,12 +43,13 @@ int main(void)
 		echo_reg = SPI_SEND_BYTE(); // Should hold 0x24
 
 		// Delay between sends
-
-		for(volatile int i = 0; i < 20000; i++);
+		if (echo_reg == 0x84) {
+			for(volatile int i = 0; i < 4000; i++); // ~10 ms between transmissions
+		} else {
+			for(volatile int i = 0; i < 20000; i++); // ~50 ms between transmissions
+		}
 	}
 
-
-	(void) echo_reg; // Keep js to avoid compiler wrng
 }
 // Init Functions
 
@@ -113,7 +114,16 @@ void SPI_CR2_setup(void) {
 }
 
 
-
+/* Drop CS line to low
+ *
+ * While TX buffer is three or more out of four bytes full, poll
+ *
+ * Once TX is empty, load in 0x84, from there hardware handles transmission of byte
+ *
+ * While the RX buffer is empty, poll
+ *
+ * Once RX not empty, raise CS line to high and return whats in shift register
+ */
 uint8_t SPI_SEND_BYTE(void) {
 	// Pull chip select low, to indicate communication
 	GPIOA->ODR &= ~(1U << 4);
@@ -129,5 +139,5 @@ uint8_t SPI_SEND_BYTE(void) {
 
 	GPIOA->ODR |= (1U << 4);
 
-	return *(__IO uint8_t *)&SPI1->DR;
+	return *(__IO uint8_t *)&SPI1->DR; // Read to pop off RX FIFO setting of RXNE flag again.
 }
