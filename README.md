@@ -8,3 +8,8 @@ Issue to fix: The CS line is going high before a single clock cycle of data is s
 
 <img width="1248" height="634" alt="Screenshot 2026-07-07 at 3 37 13 AM" src="https://github.com/user-attachments/assets/136f1f80-bf3a-4b92-b191-7957a1523f52" />
 Fig 1.3: Complete validation of loopback test to ensure MISO line works appropriately, and we can echo bytes back
+
+<img width="1246" height="632" alt="Screenshot 2026-07-07 at 2 51 12 PM" src="https://github.com/user-attachments/assets/b2e70168-0dd6-426b-a762-6d1c9785ee67" />
+Fig 1.4: Set polling wall to check that RX FIFO receives byte and seperate one to ensure Shift Register BSY flag set to zero, so it is done with transmission + cleanup, then raise CS high only AFTER all bits have been transceived
+
+#### Now all pins are functioning correctly.  The polling driver for SPI1 is complete.  Next, interrupts....
