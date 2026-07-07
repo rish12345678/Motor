@@ -5,3 +5,6 @@ Issue to fix: Right now I am using a for loop to handle delays between byte tran
 <img width="1251" height="636" alt="Screenshot 2026-07-06 at 5 33 46 PM" src="https://github.com/user-attachments/assets/32ed1b3a-a7dc-4b31-9fa9-74bedad9e916" />
 Fig 1.2: Scaled waveform sending 0x84 Over MOSI Line
 Issue to fix: The CS line is going high before a single clock cycle of data is sent, make CS stay low until all eight bits are sent over
+
+<img width="1248" height="634" alt="Screenshot 2026-07-07 at 3 37 13 AM" src="https://github.com/user-attachments/assets/136f1f80-bf3a-4b92-b191-7957a1523f52" />
+Fig 1.3: Complete validation of loopback test to ensure MISO line works appropriately, and we can echo bytes back
