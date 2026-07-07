@@ -42,8 +42,6 @@ int main(void)
 	for (;;) {
 		echo_reg = SPI_SEND_BYTE(); // Should hold 0x24
 
-		GPIOA->ODR |= (1U << 4);
-
 		// Delay between sends
 
 		for(volatile int i = 0; i < 20000; i++);
@@ -52,7 +50,6 @@ int main(void)
 
 	(void) echo_reg; // Keep js to avoid compiler wrng
 }
-
 // Init Functions
 
 void clock_init(void) {
@@ -119,7 +116,7 @@ void SPI_CR2_setup(void) {
 
 uint8_t SPI_SEND_BYTE(void) {
 	// Pull chip select low, to indicate communication
-	GPIOA->ODR &= (0 << 4);
+	GPIOA->ODR &= ~(1U << 4);
 
 	// while TX buffer not empty, keep polling
 	// once empty give it byte
@@ -127,7 +124,7 @@ uint8_t SPI_SEND_BYTE(void) {
 	// Check if bit 1 is ~1
 	while (!(SPI1->SR & SPI_SR_TXE));
 
-	*(__IO uint8_t *)&SPI1->DR = 0x24; // Sample Data to send 0x24 | 0b 0010 0100
+	*(__IO uint8_t *)&SPI1->DR = 0x84; // Sample Data to send 0x84 | 0b 1000 0100
 	while (!(SPI1->SR & SPI_SR_RXNE));
 
 	GPIOA->ODR |= (1U << 4);
