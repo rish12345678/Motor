@@ -10,6 +10,8 @@ Issue to fix: The CS line is going high before a single clock cycle of data is s
 Fig 1.3: Complete validation of loopback test to ensure MISO line works appropriately, and we can echo bytes back
 
 <img width="1246" height="632" alt="Screenshot 2026-07-07 at 2 51 12 PM" src="https://github.com/user-attachments/assets/b2e70168-0dd6-426b-a762-6d1c9785ee67" />
-Fig 1.4: Set polling wall to check that RX FIFO receives byte and seperate one to ensure Shift Register BSY flag set to zero, so it is done with transmission + cleanup, then raise CS high only AFTER all bits have been transceived
+Fig 1.4: Set polling wall to check that RX FIFO receives byte and separate one to ensure Shift Register BSY flag set to zero, so it is done with transmission + cleanup, then raise CS high only AFTER all bits have been transceived
+Final Function execution time to send and receive one byte: 41 μs, with each clock cycle taking four μs so the total transmission time was 32 μs
+Time to Send Several Bytes: N/A; due to polling, we would have to guess a short time to loop before calling the function again; inaccurate.
 
 #### Now all pins are functioning correctly.  The polling driver for SPI1 is complete.  Next, interrupts....
