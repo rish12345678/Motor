@@ -37,6 +37,8 @@ int main(void)
 	SPI_CR1_setup();
 	SPI_CR2_setup();
 
+	NVIC_EnableIRQ(SPI1_IRQn);
+
 	volatile uint8_t echo_reg = 0;
 
 	for (;;) {
@@ -111,6 +113,12 @@ void SPI_CR2_setup(void) {
 
 	// Also just set enable bit here instead of another function
 	SPI1->CR1 |= SPI_CR1_SPE;
+
+	// Set the interrupt flags, so that the TX and RX buffers spike the interrupt upon hitting their thresholds
+	SPI1->CR2 |= SPI_CR2_TXEIE;
+	SPI1->CR2 |= SPI_CR2_RXNEIE;
+
+
 }
 
 
