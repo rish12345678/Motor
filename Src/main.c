@@ -7,6 +7,26 @@
 #if !defined(__SOFT_FP__) && defined(__ARM_FP)
 #endif
 
+// Global variables that ISR can mutate
+
+const uint32_t transfer_len = 2; // How many bytes we are sending
+
+// Array to hold outgoing bytes
+volatile uint8_t transfer_arr[] = {0x24, 0x48};
+volatile uint8_t* transfer_arr_ptr = transfer_arr;
+
+// Array to capture incoming bytes
+volatile uint8_t incoming_arr[transfer_len];
+volatile uint8_t* incoming_arr_ptr = incoming_arr;
+
+volatile uint8_t incoming_idx = 0;
+volatile uint8_t outgoing_idx = 0;
+
+volatile bool is_spi_idle = true;
+
+
+
+
 /*
  * FUNCTION DECLARATIONS
  */
@@ -117,8 +137,6 @@ void SPI_CR2_setup(void) {
 	// Set the interrupt flags, so that the TX and RX buffers spike the interrupt upon hitting their thresholds
 	SPI1->CR2 |= SPI_CR2_TXEIE;
 	SPI1->CR2 |= SPI_CR2_RXNEIE;
-
-
 }
 
 
